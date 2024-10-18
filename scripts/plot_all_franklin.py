@@ -23,6 +23,15 @@ OUTPUT_GPKG: str = "../outputs/franklin_data.gpkg"
 MAPBOX_TOKEN: str = os.getenv("MAPBOX_TOKEN")
 
 def load_data() -> Tuple[xr.Dataset, gpd.GeoDataFrame, pd.DataFrame]:
+    """
+    Load necessary data from files.
+
+    Returns:
+        Tuple[xr.Dataset, gpd.GeoDataFrame, pd.DataFrame]: A tuple containing:
+            - xarray Dataset with WRF2CAMx data
+            - GeoDataFrame with Ohio counties
+            - DataFrame with AirNow stations
+    """
     ds: xr.Dataset = xr.open_dataset(NC_FILE)
     ohio_counties: gpd.GeoDataFrame = gpd.read_file(OHIO_COUNTIES_URL)
     ohio_counties = ohio_counties[ohio_counties['STATE'] == '39']  # FIPS code for Ohio is 39
@@ -30,6 +39,15 @@ def load_data() -> Tuple[xr.Dataset, gpd.GeoDataFrame, pd.DataFrame]:
     return ds, ohio_counties, airnow_stations
 
 def create_map(ds: xr.Dataset) -> folium.Map:
+    """
+    Create a Folium map centered on the dataset's domain.
+
+    Args:
+        ds (xr.Dataset): The dataset containing latitude and longitude information.
+
+    Returns:
+        folium.Map: A Folium map object with various tile layers added.
+    """
     lats, lons = ds.latitude.values, ds.longitude.values
     center_lat, center_lon = np.mean(lats), np.mean(lons)
     m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
@@ -70,6 +88,13 @@ def create_map(ds: xr.Dataset) -> folium.Map:
     return m
 
 def add_ohio_counties(m: folium.Map, ohio_counties: gpd.GeoDataFrame) -> None:
+    """
+    Add Ohio county boundaries to the map.
+
+    Args:
+        m (folium.Map): The Folium map object to add the counties to.
+        ohio_counties (gpd.GeoDataFrame): GeoDataFrame containing Ohio county geometries.
+    """
     folium.GeoJson(
         ohio_counties,
         style_function=lambda feature: {
@@ -80,6 +105,17 @@ def add_ohio_counties(m: folium.Map, ohio_counties: gpd.GeoDataFrame) -> None:
     ).add_to(m)
 
 def add_wps_grid(m: folium.Map, file_path: str, color: str) -> gpd.GeoDataFrame:
+    """
+    Add WPS grid to the map and return it as a GeoDataFrame.
+
+    Args:
+        m (folium.Map): The Folium map object to add the grid to.
+        file_path (str): Path to the WPS file.
+        color (str): Color of the grid lines.
+
+    Returns:
+        gpd.GeoDataFrame: A GeoDataFrame containing the WPS grid lines.
+    """
     ds_wps: xr.Dataset = xr.open_dataset(file_path)
     lats_wps, lons_wps = ds_wps.XLAT_M.values[0], ds_wps.XLONG_M.values[0]
     
@@ -99,6 +135,17 @@ def add_wps_grid(m: folium.Map, file_path: str, color: str) -> gpd.GeoDataFrame:
     return wps_gdf
 
 def add_camx2wrf_grid(m: folium.Map, lats: np.ndarray, lons: np.ndarray) -> gpd.GeoDataFrame:
+    """
+    Add CAMx2WRF grid to the map and return it as a GeoDataFrame.
+
+    Args:
+        m (folium.Map): The Folium map object to add the grid to.
+        lats (np.ndarray): Array of latitude values.
+        lons (np.ndarray): Array of longitude values.
+
+    Returns:
+        gpd.GeoDataFrame: A GeoDataFrame containing the CAMx2WRF grid polygons.
+    """
     camx2wrf_polygons: List[Polygon] = []
     for i in range(lats.shape[0] - 1):
         for j in range(lats.shape[1] - 1):
@@ -123,6 +170,16 @@ def add_camx2wrf_grid(m: folium.Map, lats: np.ndarray, lons: np.ndarray) -> gpd.
     return camx2wrf_gdf
 
 def add_airnow_stations(m: folium.Map, airnow_stations: pd.DataFrame) -> gpd.GeoDataFrame:
+    """
+    Add AirNow stations to the map and return them as a GeoDataFrame.
+
+    Args:
+        m (folium.Map): The Folium map object to add the stations to.
+        airnow_stations (pd.DataFrame): DataFrame containing AirNow station information.
+
+    Returns:
+        gpd.GeoDataFrame: A GeoDataFrame containing the AirNow stations.
+    """
     for _, station in airnow_stations.iterrows():
         folium.Marker(
             location=[station['lat'], station['lon']],
@@ -139,6 +196,13 @@ def add_airnow_stations(m: folium.Map, airnow_stations: pd.DataFrame) -> gpd.Geo
     return airnow_gdf
 
 def add_map_features(m: folium.Map, ds: xr.Dataset) -> None:
+    """
+    Add additional features to the map such as minimap, layer control, and title.
+
+    Args:
+        m (folium.Map): The Folium map object to add features to.
+        ds (xr.Dataset): The dataset containing date information for the title.
+    """
     minimap: plugins.MiniMap = plugins.MiniMap()
     m.add_child(minimap)
     folium.LayerControl().add_to(m)
@@ -148,6 +212,16 @@ def add_map_features(m: folium.Map, ds: xr.Dataset) -> None:
     m.get_root().html.add_child(folium.Element(title_html))
 
 def export_data(ohio_counties: gpd.GeoDataFrame, wps_d01_gdf: gpd.GeoDataFrame, wps_d02_gdf: gpd.GeoDataFrame, camx2wrf_gdf: gpd.GeoDataFrame, airnow_gdf: gpd.GeoDataFrame) -> None:
+    """
+    Export all data to a GeoPackage file.
+
+    Args:
+        ohio_counties (gpd.GeoDataFrame): GeoDataFrame containing Ohio county geometries.
+        wps_d01_gdf (gpd.GeoDataFrame): GeoDataFrame containing WPS domain 1 grid.
+        wps_d02_gdf (gpd.GeoDataFrame): GeoDataFrame containing WPS domain 2 grid.
+        camx2wrf_gdf (gpd.GeoDataFrame): GeoDataFrame containing CAMx2WRF grid.
+        airnow_gdf (gpd.GeoDataFrame): GeoDataFrame containing AirNow stations.
+    """
     ohio_counties.to_file(OUTPUT_GPKG, layer='ohio_counties', driver="GPKG")
     wps_d01_gdf.to_file(OUTPUT_GPKG, layer='wps_grid_d01', driver="GPKG")
     wps_d02_gdf.to_file(OUTPUT_GPKG, layer='wps_grid_d02', driver="GPKG")
@@ -156,6 +230,9 @@ def export_data(ohio_counties: gpd.GeoDataFrame, wps_d01_gdf: gpd.GeoDataFrame, 
     print(f"Data exported as GeoPackage: {OUTPUT_GPKG}")
 
 def main() -> None:
+    """
+    Main function to orchestrate the creation of the map and data export.
+    """
     ds, ohio_counties, airnow_stations = load_data()
     m: folium.Map = create_map(ds)
     add_ohio_counties(m, ohio_counties)
