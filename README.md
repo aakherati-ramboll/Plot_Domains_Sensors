@@ -72,17 +72,28 @@ To set up the project environment and install the required dependencies, follow 
 4. Activate the virtual environment:
    - On Windows:
      ```
-     venv\Scripts\activate
+     .venv\Scripts\activate
      ```
    - On macOS and Linux:
      ```
-     source venv/bin/activate
+     source .venv/bin/activate
      ```
 
 5. Install the required dependencies:
    ```
    pip install -r requirements.txt
    ```
+
+6. Set up the Mapbox token:
+   - Create a `.env` file in the root directory of the project if it doesn't exist already.
+   - Add your Mapbox token to the `.env` file in the following format:
+     ```
+     MAPBOX_TOKEN=your_mapbox_token_here
+     ```
+   - Replace `your_mapbox_token_here` with your actual Mapbox token.
+
+   Note: The `.env` file is included in the `.gitignore` to prevent accidentally sharing your private token. Never commit this file to version control.
+
 
 This will set up a isolated Python environment with all the necessary libraries installed.
 
