@@ -38,7 +38,6 @@ def create_map(ds: xr.Dataset) -> folium.Map:
     folium.TileLayer('openstreetmap').add_to(m)
     folium.TileLayer('cartodbdark_matter', name='Dark Map').add_to(m)
     folium.TileLayer('cartodbpositron', name='Light Map').add_to(m)
-    folium.TileLayer('stamenterrain', name='Terrain').add_to(m)
     folium.TileLayer(
         tiles=f'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{{z}}/{{x}}/{{y}}?access_token={MAPBOX_TOKEN}',
         attr='Mapbox',
