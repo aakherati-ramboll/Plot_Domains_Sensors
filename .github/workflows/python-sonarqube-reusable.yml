@@ -1,0 +1,74 @@
+name: Python SonarQube Reusable Workflow
+
+# Trigger this workflow by a caller workflow
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SONAR_HOST_URL:
+        required: true
+      SONAR_PROJECT_KEY:
+        required: true
+
+jobs:
+  sonarqube:
+    runs-on: 
+      group: ForAllRepos
+      labels: self-hosted
+
+    steps:
+      # Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          # Full git history is needed to get a proper
+          # list of changed files within `super-linter`
+          fetch-depth: 0
+
+      - name: Project Creation 
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d '/' -f 2) 
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          RESPONSE=$(curl -u admin:${{ secrets.SONAR_PASSWORD }} -X POST 'https://sonarqube.ramboll.com/api/projects/create?name=$REPO_NAME&project=$REPO_NAME') 
+          echo "$RESPONSE"
+          PROJECT_KEY=$(echo "$RESPONSE" | jq -r '.project.key')
+          echo "Project Key: $PROJECT_KEY"
+          echo "PROJECT_KEY=$PROJECT_KEY" >> $GITHUB_ENV
+        shell: bash --noprofile --norc -eo pipefail -x {0} 
+
+
+      - name: Validate Project Creation
+        run: |
+           if [[ -z "${PROJECT_KEY}" ]]; then
+             echo "Project already exists"
+      
+           else
+             echo "Project created successfully in SonarQube"
+           fi
+           echo "REPO_NAME: $REPO_NAME"
+           echo "PROJECT_KEY: $PROJECT_KEY"
+           echo "SONAR_TOKEN: $SONAR_TOKEN"
+        shell: bash
+        env:
+           PROJECT_KEY: ${{ env.PROJECT_KEY }}
+           REPO_NAME: ${{ env.REPO_NAME }}
+           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - uses: sonarsource/sonarqube-scan-action@master
+        with:
+          args:
+            -Dsonar.verbose=true
+            -Dsonar.projectName=${{github.event.repository.name}}
+            -Dsonar.projectKey=${{github.event.repository.name}}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+
+          
+     
+
+     
+
+  
