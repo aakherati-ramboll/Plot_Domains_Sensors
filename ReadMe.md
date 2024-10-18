@@ -52,6 +52,40 @@ Main libraries used in this project include:
 
 To use these scripts, ensure you have the required dependencies installed and the necessary input data. Modify the input and output paths in the scripts as needed for your specific use case.
 
+## Setup
+
+To set up the project environment and install the required dependencies, follow these steps:
+
+1. Ensure you have Python 3.7+ installed on your system.
+
+2. Clone this repository to your local machine:
+   ```
+   git clone <repohttps://github.com/your-username/geospatial-data-visualization.git
+   cd geospatial-data-visualization
+   ```
+
+3. Create a virtual environment:
+   ```
+   python -m venv .venv
+   ```
+
+4. Activate the virtual environment:
+   - On Windows:
+     ```
+     venv\Scripts\activate
+     ```
+   - On macOS and Linux:
+     ```
+     source venv/bin/activate
+     ```
+
+5. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+This will set up a isolated Python environment with all the necessary libraries installed.
+
 ## Contributing
 
 Contributions to enhance the functionality, add new visualization capabilities, or improve existing scripts are welcome. Please submit pull requests or open issues for any bugs or feature requests.
